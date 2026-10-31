@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <!-- Só roda código do próprio app; conexões só com HTTPS (servidor, atualizações) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>WDQ Sampler</title>
+  <meta name="description" content="WDQ Sampler — sampler, sequenciador e efeitos de DJ profissionais.">
+  <meta name="theme-color" content="#060607">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WDQ Sampler">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="assets/favicon-64.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <radialGradient id="knobcap" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#4a4c57"/><stop offset=".6" stop-color="#25262d"/><stop offset="1" stop-color="#16171c"/></radialGradient>
+    </defs>
+  </svg>
+
+  <!-- ABERTURA -->
+  <div id="splash" role="button" aria-label="Toque para começar">
+    <div class="splash-inner">
+      <div class="splash-logo" id="splashLogo"></div>
+      <div class="wordmark">
+        <div class="wdq">WDQ</div>
+        <div class="bar"></div>
+        <div class="sampler">SAMPLER</div>
+      </div>
+      <div class="tagline">Pads · Sequencer · DJ FX</div>
+      <button class="splash-start" id="splashStart">Toque para começar</button>
+    </div>
+    <div class="splash-ver" id="splashVer"></div>
+  </div>
+
+  <!-- LOGIN / CADASTRO -->
+  <div id="auth" hidden>
+    <form class="auth-card" id="authForm" novalidate>
+      <div class="auth-brand">
+        <img src="assets/logo.svg" alt="">
+        <div><b>WDQ</b><span>SAMPLER</span></div>
+      </div>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" data-auth="in" class="on">Entrar</button>
+        <button type="button" data-auth="up">Criar conta</button>
+      </div>
+      <div class="field" data-only="up">
+        <label for="aName">Seu nome ou nome artístico</label>
+        <input id="aName" autocomplete="nickname" maxlength="60">
+      </div>
+      <div class="field" data-hide="newpw">
+        <label for="aEmail">E-mail</label>
+        <input id="aEmail" type="email" autocomplete="email" inputmode="email" required>
+      </div>
+      <div class="field" data-hide="forgot">
+        <label for="aPass" id="aPassLbl">Senha</label>
+        <div class="pw-wrap">
+          <input id="aPass" type="password" autocomplete="current-password" required>
+          <button type="button" id="aShow">mostrar</button>
+        </div>
+      </div>
+      <div class="field" data-only="up">
+        <label for="aPass2">Confirmar senha</label>
+        <input id="aPass2" type="password" autocomplete="new-password">
+      </div>
+      <p class="auth-legal" data-only="up">Ao criar a conta você concorda com a <a id="privacyLink" href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
+      <div class="auth-msg" id="authMsg" role="status"></div>
+      <button class="btn primary block" id="authSubmit" type="submit">Entrar</button>
+      <div class="auth-links">
+        <button type="button" id="aForgot">Esqueci minha senha</button>
+        <button type="button" id="aBack" hidden>Voltar</button>
+      </div>
+      <div class="auth-mode" id="authMode"></div>
+      <div class="auth-credit">DESENVOLVIDO POR WEBER DE QUEIROZ - WDQ BRASIL</div>
+    </form>
+  </div>
+
+  <!-- APLICATIVO -->
+  <div id="app" hidden data-m="pads">
+    <header class="topbar">
+      <button class="iconbtn drawer-btn" id="btnDrawer" title="Biblioteca" aria-label="Biblioteca">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="brand"><img src="assets/logo.svg" alt="WDQ Sampler"><div class="t"><b>WDQ</b><span>SAMPLER</span></div></div>
+      <button class="proj" id="btnProj" title="Renomear projeto"><span class="dot" id="saveDot"></span><span class="name" id="projName">Projeto</span></button>
+      <div class="transport">
+        <button class="tbtn rec" id="btnRec" title="REC: grava substituindo na primeira volta, depois vira overdub" aria-label="Gravar (REC)"><svg viewBox="0 0 24 24"><circle cx="12" cy="11" r="6"/></svg><span class="lbl">REC</span></button>
+        <button class="tbtn rec" id="btnOverdub" title="OVERDUB: grava somando ao que já existe (Enter)" aria-label="Overdub"><svg viewBox="0 0 24 24"><circle cx="12" cy="11" r="6"/><path d="M12 8v6M9 11h6" stroke="#000" stroke-width="2"/></svg><span class="lbl">DUB</span></button>
+        <button class="tbtn" id="btnStop" title="STOP (Esc): para; aperte de novo para voltar ao início" aria-label="Parar"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="12" rx="1.5"/></svg><span class="lbl">STOP</span></button>
+        <button class="tbtn play" id="btnPlay" title="PLAY (Espaço): toca de onde parou" aria-label="Tocar"><svg viewBox="0 0 24 24"><path d="M7 4v14l12-7z"/></svg><span class="lbl">PLAY</span></button>
+        <button class="tbtn play" id="btnPlayStart" title="PLAY START: toca do início" aria-label="Tocar do início"><svg viewBox="0 0 24 24"><path d="M5 4v14M9 4v14l11-7z"/></svg><span class="lbl">START</span></button>
+      </div>
+      <div class="lcd">
+        <div class="cell bpm" id="lcdBpm" title="Arraste para cima/baixo ou toque duas vezes para digitar">
+          <small>BPM</small><div class="big" id="bpmVal">120.0</div>
+        </div>
+        <div class="cell"><small>POS</small><div class="mid" id="posVal">1.1.1</div><div class="beats4" id="beats4"><i></i><i></i><i></i><i></i></div></div>
+        <div class="cell opt"><small>SWING</small><div class="mid" id="swingVal">50%</div></div>
+        <div class="cell opt" style="min-width:120px;max-width:200px"><small>PATTERN</small><div class="mid" id="patVal">A</div></div>
+      </div>
+      <button class="pill" id="btnTap" title="Tap tempo">TAP</button>
+      <div class="patterns" id="patBtns"></div>
+      <button class="pill" id="btnSong" title="Modo song: toca a sequência de patterns">SONG</button>
+      <div class="spacer"></div>
+      <button class="iconbtn undo-btn" id="btnUndo" title="Desfazer (Ctrl+Z)" aria-label="Desfazer" disabled>
+        <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+      </button>
+      <button class="iconbtn redo-btn" id="btnRedo" title="Refazer (Ctrl+Shift+Z)" aria-label="Refazer" disabled>
+        <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
+      </button>
+      <button class="iconbtn" id="btnMetro" title="Metrônomo" aria-label="Metrônomo">
+        <svg viewBox="0 0 24 24"><path d="M9 3h6l4 18H5zM12 17l5-9"/></svg>
+      </button>
+      <button class="iconbtn" id="btnInstall" title="Instalar o app" aria-label="Instalar" hidden>
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
+      </button>
+      <button class="avatar" id="btnUser" title="Conta">W</button>
+    </header>
+
+    <aside class="browser" id="browser">
+      <div class="panel-title"><span>BIBLIOTECA</span><span id="libCount"></span></div>
+      <div class="seg" id="libTabs">
+        <button data-lib="kits" class="on">KITS &amp; BASES</button>
+        <button data-lib="sounds">SONS</button>
+      </div>
+      <div class="search"><input id="libSearch" type="search" placeholder="Buscar estilo, kit ou som…" aria-label="Buscar na biblioteca"></div>
+      <div class="blist" id="libList"></div>
+    </aside>
+
+    <main class="screen">
+      <nav class="tabs" id="tabs">
+        <button data-view="seq" class="on">SEQUÊNCIA</button>
+        <button data-view="pad">EDITAR PAD</button>
+        <button data-view="mixer">MIXER</button>
+        <button data-view="song">SONG</button>
+        <button data-view="folder">MINHA PASTA</button>
+        <button data-view="settings">AJUSTES</button>
+      </nav>
+      <section class="view" id="view"></section>
+    </main>
+
+    <section class="padzone">
+      <div class="pz-head">
+        <div class="banks" id="banks"></div>
+      </div>
+      <div class="pz-modes">
+        <button class="pill red" id="btnFull">FULL LEVEL</button>
+        <button class="pill" id="btn16">16 LEVELS</button>
+        <button class="pill cyan" id="btnNR">NOTE REPEAT</button>
+        <button class="pill" id="btnPadMute" title="PAD MUTE: tocar num pad liga/desliga o mute dele">PAD MUTE</button>
+        <button class="pill red" id="btnErase" title="ERASE: tocar num pad apaga as notas dele no pattern atual">ERASE</button>
+        <button class="pill" id="btnTapPads" title="Tap tempo">TAP</button>
+      </div>
+      <div class="nr-rates" id="nrRates"></div>
+      <div class="qlink" id="qlink"></div>
+      <div class="pads" id="pads"></div>
+      <div class="pz-info">
+        <span id="padInfo"><b>A01</b></span>
+        <span class="spacer"></span>
+        <button class="btn small" id="btnEditPad">Editar pad</button>
+      </div>
+    </section>
+
+    <footer class="djm" id="djm"></footer>
+
+    <div class="credit">DESENVOLVIDO POR WEBER DE QUEIROZ - WDQ BRASIL</div>
+
+    <nav class="mnav" id="mnav">
+      <button data-m="pads" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>PADS</button>
+      <button data-m="screen" data-v="seq"><svg viewBox="0 0 24 24"><path d="M3 6h4M10 6h4M17 6h4M3 12h4M17 12h4M10 18h4"/></svg>SEQ</button>
+      <button data-m="fx"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 12l4-4"/></svg>FX</button>
+      <button data-m="screen" data-v="mixer"><svg viewBox="0 0 24 24"><path d="M6 3v18M12 3v18M18 3v18"/><rect x="4" y="13" width="4" height="3"/><rect x="10" y="7" width="4" height="3"/><rect x="16" y="15" width="4" height="3"/></svg>MIXER</button>
+      <button data-m="browser"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>SONS</button>
+      <button data-m="screen" data-v="folder"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>PASTA</button>
+    </nav>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+  <div id="modal" hidden></div>
+  <input type="file" id="fileAudio" accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.aiff" multiple hidden>
+  <input type="file" id="fileProject" accept=".wdq,application/json,application/gzip,application/octet-stream" hidden>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
